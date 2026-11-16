@@ -29,7 +29,7 @@ D("2026-11-16", "Me présenter simplement",
   "Écris ta présentation en 5 phrases maximum : qui tu es, ce que tu fais, une chose qui t'intéresse, un détail personnel.",
   "Présente-toi pendant 30 secondes à une personne que tu rencontres pour la première fois. Termine par une question pour elle.",
   reg=("Moi c'est Karim, je fais de l'info.", "Je m'appelle Karim, je suis étudiant en informatique.", "Je suis Karim, élève ingénieur en génie logiciel."),
-  tag="Test initial aujourd'hui"),
+  tag="Test initial d'abord (p. 16)"),
 
 D("2026-11-17", "Raconter ma journée d'hier",
   "Raconter une suite d'actions au passé composé avec d'abord, ensuite, après, enfin.",

@@ -62,7 +62,7 @@ PHASES = [
                  "Adapter mes réponses à un jury bienveillant ou exigeant", "Corriger mes erreurs récurrentes",
                  "Suivre une routine anti-stress avant de parler"],
          final="Réussir la simulation finale complète : présentation + 15 minutes de questions, avec calme et clarté.",
-         warm="5 minutes"),
+         warm="4 minutes"),
 ]
 
 
@@ -192,7 +192,7 @@ SUNDAY = [
      "Réponds à 3 questions surprises de Claude sur ta vie quotidienne, sans préparer."),
     ("Raconter et projeter", "Raconte ton week-end idéal au passé, comme s'il avait déjà eu lieu (1 min 30).",
      "Explique un petit problème de ta semaine et comment tu l'as résolu (1 min).",
-     "Évaluation du mois : fais aussi la page « Évaluation mensuelle » qui suit."),
+     "Parle 1 minute de ta semaine prochaine : utilise le futur proche et le futur simple."),
     ("Relier ses idées", "Décris ta journée type en utilisant au moins 4 connecteurs différents (1 min 30).",
      "Donne ton avis : « Faut-il apprendre une langue avec une IA ? » — 3 arguments (2 min).",
      "Dialogue surprise avec Claude : prendre un rendez-vous et le déplacer."),
@@ -204,7 +204,7 @@ SUNDAY = [
      "Décris une photo ou une scène de ta rue, comme pour quelqu'un qui ne la voit pas (1 min)."),
     ("Bilan de l'année", "Raconte ton année 2026 en 2 minutes : réussites, difficultés, leçons.",
      "Explique pourquoi tu as choisi le génie logiciel (1 min 30).",
-     "Évaluation du mois : fais aussi la page « Évaluation mensuelle » qui suit."),
+     "Réponds à 3 questions surprises de Claude sur tes projets pour 2027."),
     ("Premiers pas professionnels", "Fais un point d'avancement comme dans un daily : hier, aujourd'hui, blocages (1 min).",
      "Écris puis dis un message à ton responsable pour annoncer un retard (1 min).",
      "Dialogue surprise : un collègue te demande de l'aide pour une tâche que tu ne connais pas."),
@@ -219,7 +219,7 @@ SUNDAY = [
      "Explique la sécurité d'une connexion utilisateur en 1 minute."),
     ("Bilan professionnel", "Présente une démo technique imaginaire ou réelle en 2 minutes, avec transitions.",
      "Explique Git, CI/CD ou Docker à deux publics : expert puis débutant (1 min chacun).",
-     "Évaluation du mois : fais aussi la page « Évaluation mensuelle » qui suit."),
+     "Annonce un retard à ton responsable et propose une solution concrète (1 min)."),
     ("Mon sujet en clair", "Présente ton sujet en 1 phrase, puis en 1 minute, puis en 3 minutes.",
      "Explique ta problématique à quelqu'un qui ne connaît pas ton domaine (1 min).",
      "Claude te pose 3 questions « pourquoi ? » sur tes objectifs."),
@@ -231,7 +231,7 @@ SUNDAY = [
      "Raconte la difficulté principale de ton projet et ce qu'elle t'a appris (1 min 30)."),
     ("Le projet en entier", "Présente ton projet en 5 minutes sans support (chronomètre).",
      "Parle de tes limites et de tes perspectives avec honnêteté (1 min 30).",
-     "Évaluation du mois : fais aussi la page « Évaluation mensuelle » qui suit."),
+     "Claude te pose 3 questions sur tes choix techniques : réponds en moins d'une minute chacune."),
     ("Ouvrir et structurer", "Enchaîne : salutation, présentation personnelle, sujet, plan (1 min 30).",
      "Fais 3 transitions entre parties de ta soutenance, à voix haute.",
      "Explique une de tes diapositives comme si le jury la regardait."),
@@ -243,7 +243,7 @@ SUNDAY = [
      "Note ta réponse la plus faible et réécris-la, puis redis-la."),
     ("Jury critique", "Claude pose 5 questions critiques sur tes choix, tes tests et tes limites.",
      "Demande une reformulation sur une question ambiguë, puis réponds.",
-     "Évaluation du mois : fais aussi la page « Évaluation mensuelle » qui suit."),
+     "Réponds à une question en deux parties posée par Claude, en annonçant les deux parties."),
     ("Simulation partielle", "Présente la 1re moitié de ta soutenance, chronométrée.",
      "Claude t'interrompt 2 fois : reprends ton fil avec une expression de transition.",
      "Bilan : 3 corrections prioritaires pour la semaine."),
@@ -255,7 +255,7 @@ SUNDAY = [
      "Relis ta fiche projet et corrige ce qui n'est plus exact."),
     ("Avant le jour J", "Pitch final de 2 minutes, avec calme et pauses.",
      "Routine anti-stress complète, puis introduction de la soutenance.",
-     "Évaluation du mois : fais la page « Évaluation mensuelle », puis repose-toi."),
+     "Réponds à « Que retenez-vous de ce projet ? » en 45 secondes, calmement."),
 ]
 
 MONTH_EVAL = {

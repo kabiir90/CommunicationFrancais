@@ -34,154 +34,223 @@ def esc(s):
 
 
 def esc_groups(s):
-    s = esc(s).replace(" // ", ' <span class="sep2">//</span> ').replace(" / ", ' <span class="sep">/</span> ')
-    return s
+    """Chaque groupe de souffle devient un arc ; « // » devient une pause rouge."""
+    out = []
+    for i, chunk in enumerate(s.split(" // ")):
+        if i:
+            out.append('<span class="pause">‖</span>')
+        out.append("".join(f'<span class="g">{esc(g)}</span>' for g in chunk.split(" / ")))
+    return "".join(out)
+
+
+def esc_or(s):
+    return esc(s).replace(" / ", ' <span class="or">ou</span> ')
+
+
+def wave(w_mm, h_mm, amp=1.0, n=150, color="#D6402B", seed=0.0):
+    """Onde sonore décorative (barres verticales), déterministe."""
+    import math
+    bw = w_mm / n
+    bars = []
+    for i in range(n):
+        x = i / (n - 1)
+        env = math.sin(math.pi * x) ** 0.6
+        v = abs(math.sin(i * 0.47 + seed) * 0.55 + math.sin(i * 0.13 + seed * 2) * 0.35 + math.sin(i * 1.7) * 0.18)
+        hh = max(0.5, h_mm * amp * env * min(1.0, v))
+        bars.append(f'<rect x="{i * bw:.2f}" y="{(h_mm - hh) / 2:.2f}" width="{bw * 0.55:.2f}" height="{hh:.2f}" rx="{bw * 0.27:.2f}"/>')
+    return (f'<svg class="wave" width="{w_mm}mm" height="{h_mm}mm" viewBox="0 0 {w_mm} {h_mm}" fill="{color}">'
+            + "".join(bars) + "</svg>")
 
 
 # ------------------------------------------------------------------ CSS
 CSS = r"""
 @page { size: A4; margin: 0; }
-:root{--ink:#1c2333;--muted:#5d6678;--faint:#8a92a3;--accent:#b8502a;--accent-soft:#fbefe9;
---teal:#1d6a73;--teal-soft:#eaf4f5;--gold:#a87b22;--gold-soft:#faf3e3;--plum:#5b4a8b;--plum-soft:#f1eef8;
---line:#dfe3ea;--soft:#f5f6f8;}
+@font-face{font-family:"Voix";src:url("file:///C:/Windows/Fonts/bahnschrift.ttf");font-weight:300 700;font-stretch:75% 100%}
+:root{
+--paper:#FBF8F2;--ink:#1C2448;--ink2:#4A5275;--faint:#8D93AB;--rule:#D9DCE6;
+--red:#D6402B;--red-soft:#FBE9E4;--hl:#FFE36E;--blue-soft:#EDF0F8;--note:#E8EEFA;
+--sy-major:#AFBDE0;--sy-minor:#E2E7F4;--margin:#E8907F;
+--accent:var(--red);--accent-soft:var(--red-soft);--teal:var(--ink);--teal-soft:var(--blue-soft);
+--gold:#8C6A12;--gold-soft:#FFF6CF;--plum:var(--ink);--plum-soft:var(--blue-soft);
+--line:var(--rule);--soft:#F2EEE5;--muted:var(--ink2);
+--serif:"Sitka Text","Sitka Display",Georgia,serif;--disp:"Sitka Display","Sitka Text",Georgia,serif;
+--sans:"Voix","Bahnschrift","Segoe UI",sans-serif;--mono:"Cascadia Mono",Consolas,monospace}
 *{box-sizing:border-box}
-html,body{margin:0;padding:0;background:#fff;color:var(--ink);
- font-family:"Segoe UI","Calibri",sans-serif;font-size:9.4pt;line-height:1.42;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.page{width:210mm;height:297mm;position:relative;overflow:hidden;page-break-after:always;break-after:page;background:#fff}
-.ph{position:absolute;top:8mm;left:17mm;right:17mm;display:flex;justify-content:space-between;
- font-size:7.2pt;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);border-bottom:.6pt solid var(--line);padding-bottom:1.6mm}
-.ph b{color:var(--accent);font-weight:600}
-.pf{position:absolute;bottom:7.5mm;left:17mm;right:17mm;display:flex;justify-content:space-between;align-items:center;
- font-size:7.2pt;color:var(--faint)}
-.pf .num{font-family:Georgia,serif;font-size:9pt;color:var(--ink)}
-.content{position:absolute;top:17mm;bottom:14mm;left:17mm;right:17mm;overflow:hidden}
-h1,h2,h3,.serif{font-family:Georgia,"Cambria",serif;font-weight:normal;margin:0}
-h2.sec{font-size:17pt;color:var(--ink);margin:0 0 3mm}
+html,body{margin:0;padding:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:9.1pt;line-height:1.42;
+ -webkit-print-color-adjust:exact;print-color-adjust:exact;font-optical-sizing:auto}
+.page{width:210mm;height:297mm;position:relative;overflow:hidden;break-after:page;page-break-after:always;background:var(--paper)}
+.ph{position:absolute;top:8mm;left:15mm;right:15mm;display:flex;justify-content:space-between;font-size:7pt;letter-spacing:.08em;color:var(--faint)}
+.ph b{color:var(--red);font-weight:600}
+.pf{position:absolute;bottom:7mm;left:15mm;right:15mm;display:flex;justify-content:space-between;align-items:flex-end;font-size:7pt;color:var(--faint)}
+.pf .num{font-stretch:75%;font-weight:600;font-size:12pt;color:var(--ink);line-height:1}
+.prog{position:absolute;left:0;right:14mm;top:-2.6mm;height:.9pt;background:var(--rule)}
+.prog i{display:block;height:100%;background:var(--red)}
+.content{position:absolute;top:16mm;bottom:15mm;left:17mm;right:17mm;overflow:hidden}
+.page.day::before{content:"";position:absolute;left:30mm;top:0;bottom:0;border-left:.9pt solid var(--margin)}
+.page.day .content{left:15mm;right:15mm;padding-left:20mm}
+h1,h2,h3,.serif{font-family:var(--serif);font-weight:normal;margin:0}
+h2.sec{font-family:var(--disp);font-size:22pt;line-height:1.1;color:var(--ink);margin:0 0 3mm}
 p{margin:0 0 2mm}
-.fill{display:inline-block;min-width:24mm;border-bottom:1pt dashed var(--accent);color:var(--accent);
- font-style:italic;padding:0 1mm;background:var(--accent-soft);border-radius:1mm 1mm 0 0}
-.sep{color:var(--accent);font-weight:700;margin:0 .4mm}
-.sep2{color:var(--accent);font-weight:700}
-.muted{color:var(--muted)}
-.small{font-size:8.2pt}
-.kicker{font-size:7.4pt;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.fill{color:var(--ink);font-style:italic;font-family:var(--serif);padding:0 .8mm;
+ background:linear-gradient(transparent 30%,var(--hl) 30%,var(--hl) 92%,transparent 92%)}
+.g{display:inline-block;padding:0 .6mm .7mm;border-bottom:1pt solid var(--ink2);border-radius:0 0 50% 50%/0 0 2mm 2mm;margin-right:1.6mm}
+.pause{color:var(--red);font-weight:700;margin:0 1.6mm 0 .2mm;font-family:var(--sans)}
+.sep,.sep2{color:var(--red);font-weight:700}
+.muted{color:var(--ink2)}
+.small{font-size:8pt}
+.kicker{font-size:7.6pt;letter-spacing:.18em;text-transform:uppercase;color:var(--red);font-weight:600}
+.or{font-family:var(--sans);font-size:6.8pt;color:var(--red);letter-spacing:.06em;margin:0 1.2mm;text-transform:uppercase}
 
-/* --- day header --- */
-.dayhead{display:flex;align-items:flex-end;gap:5mm;margin-bottom:1.5mm}
-.dnum{font-family:Georgia,serif;font-size:30pt;line-height:.9;color:var(--accent)}
-.dnum small{display:block;font-family:"Segoe UI",sans-serif;font-size:6.8pt;letter-spacing:.16em;color:var(--faint);text-transform:uppercase;margin-bottom:1mm}
-.dmeta{flex:1}
-.ddate{font-size:9pt;color:var(--muted);text-transform:capitalize}
-.dtitle{font-family:Georgia,serif;font-size:17pt;line-height:1.15;color:var(--ink)}
-.chips{display:flex;flex-wrap:wrap;gap:1.5mm;justify-content:flex-end;max-width:52mm}
-.chip{font-size:7pt;padding:.6mm 2mm;border-radius:5mm;background:var(--soft);color:var(--muted);white-space:nowrap}
-.chip.a{background:var(--accent);color:#fff}
-.chip.l{background:var(--gold-soft);color:var(--gold);font-weight:600}
-.trio{display:grid;grid-template-columns:1fr 1fr 1.25fr;gap:3mm;margin:2.5mm 0 2.5mm;padding:2.2mm 0;border-top:.6pt solid var(--line);border-bottom:.6pt solid var(--line)}
-.trio div{font-size:8.4pt;line-height:1.35}
-.trio b{display:block;font-size:6.8pt;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);margin-bottom:.6mm}
-.trio .goal b{color:var(--accent)}
-.timeline{display:flex;height:6.2mm;border-radius:1.2mm;overflow:hidden;margin-bottom:1mm}
-.timeline div{display:flex;align-items:center;justify-content:center;font-size:6.6pt;color:#fff;white-space:nowrap;overflow:hidden;border-right:1.2pt solid #fff}
-.tlnote{font-size:7.4pt;color:var(--muted);margin-bottom:2.6mm}
+/* ---------- en-tête de séance ---------- */
+.dayhead{position:relative;padding-right:38mm;margin-bottom:2mm}
+.dnum{position:absolute;left:-21mm;top:.5mm;width:14mm;text-align:right;font-stretch:75%;font-weight:700;font-size:22pt;line-height:.9;color:var(--red)}
+.dnum small{display:block;font-size:6.4pt;font-weight:500;letter-spacing:.2em;color:var(--faint);margin-bottom:1mm}
+.ddate{font-size:8.2pt;letter-spacing:.06em;color:var(--ink2)}
+.dtitle{font-family:var(--disp);font-size:21pt;line-height:1.08;color:var(--ink);margin-top:.4mm}
+.dmetaline{font-size:7.8pt;color:var(--ink2);margin-top:1.2mm}
+.dmetaline b{color:var(--red);font-weight:600}
+.stamps{position:absolute;right:0;top:1mm;display:flex;flex-direction:column;align-items:flex-end;gap:2.4mm}
+.stamp{display:inline-block;transform:rotate(-4deg);border:1.3pt solid var(--red);outline:.5pt solid var(--red);outline-offset:.6mm;
+ color:var(--red);font-weight:700;font-stretch:80%;font-size:7.4pt;letter-spacing:.14em;text-transform:uppercase;padding:.6mm 2.2mm;border-radius:.6mm}
+.stamp.ink{border-color:var(--ink);outline-color:var(--ink);color:var(--ink);transform:rotate(3deg)}
+.trio{display:grid;grid-template-columns:1fr 1fr 1.2fr;margin:2.6mm 0 3mm;border-top:.6pt solid var(--rule);border-bottom:.6pt solid var(--rule)}
+.trio>div{font-size:8.2pt;line-height:1.38;padding:1.8mm 3mm 2mm;border-left:.6pt solid var(--rule)}
+.trio>div:first-child{border-left:none;padding-left:0}
+.trio b{display:block;font-family:var(--serif);font-style:italic;font-weight:normal;font-size:9.4pt;color:var(--ink);margin-bottom:.4mm}
+.trio .goal b{color:var(--red)}
+.trio .goal b:before{content:"✓ ";font-style:normal}
+/* règle graduée en minutes */
+.ruler{display:flex;border-right:.8pt solid var(--ink);margin:0 0 1.2mm}
+.seg{--m:5;position:relative;min-width:11.5mm;height:9.5mm;border-left:.8pt solid var(--ink);border-top:2.4pt solid var(--ink);
+ background-image:linear-gradient(90deg,var(--ink2) .45pt,transparent .45pt);background-size:calc(100% / var(--m)) 1.6mm;background-repeat:repeat-x;background-position:0 0;padding:2.2mm 0 0 1.2mm;overflow:hidden}
+.seg.spk{border-top-color:var(--red)}
+.seg .lab{display:block;font-size:6.9pt;font-weight:600;white-space:nowrap;color:var(--ink)}
+.seg.spk .lab{color:var(--red)}
+.seg .min{display:block;font-size:6.6pt;color:var(--ink2)}
+.tlnote{font-size:7.3pt;color:var(--ink2);margin-bottom:1mm}
 .tlnote b{color:var(--ink)}
 
-/* --- sections --- */
-.sh{display:flex;align-items:center;gap:2.2mm;margin:2.6mm 0 1.4mm}
-.sh .n{width:5.6mm;height:5.6mm;border-radius:50%;background:var(--ink);color:#fff;font-size:7.6pt;display:flex;align-items:center;justify-content:center;font-weight:600;flex:none}
-.sh .t{font-family:Georgia,serif;font-size:11.6pt}
-.sh .m{margin-left:auto;font-size:7.2pt;color:var(--muted);border:.6pt solid var(--line);border-radius:4mm;padding:.3mm 2mm}
-.instr{font-size:8.3pt;color:var(--muted);margin-bottom:1.4mm}
+/* ---------- sections ---------- */
+.sh{position:relative;display:flex;align-items:baseline;gap:2mm;margin:3mm 0 1.4mm}
+.sh .n{position:absolute;left:-21mm;top:-.4mm;width:14mm;text-align:right;font-stretch:75%;font-weight:700;font-size:15pt;line-height:1;color:var(--red)}
+.sh .n small{display:block;font-size:6.6pt;font-weight:500;color:var(--ink2);margin-top:.8mm;letter-spacing:.04em}
+.sh .t{font-family:var(--serif);font-size:13.2pt;line-height:1.15;color:var(--ink)}
+.instr{font-size:8.1pt;color:var(--ink2);margin-bottom:1.4mm}
 .instr b{color:var(--ink);font-weight:600}
-.warm{background:var(--soft);border-radius:1.6mm;padding:2mm 3mm;font-size:9pt}
-.warm .q{font-family:Georgia,serif;font-size:10.4pt;font-style:italic}
-.text{font-family:Georgia,serif;font-size:10.1pt;line-height:1.55;padding:2.6mm 3.6mm;border-left:2.4pt solid var(--teal);background:var(--teal-soft);border-radius:0 1.6mm 1.6mm 0;margin-bottom:1.6mm}
-.text .lbl{font-family:"Segoe UI",sans-serif;font-size:6.8pt;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);font-weight:600;display:block;margin-bottom:.8mm}
-ol.qs{margin:0;padding-left:5mm;font-size:8.9pt}
-ol.qs li{margin-bottom:.4mm}
-.steps{display:grid;grid-template-columns:repeat(6,1fr);gap:1.2mm;margin-bottom:1.8mm}
-.steps div{background:var(--soft);border-radius:1.2mm;padding:1mm 1.4mm;font-size:6.9pt;line-height:1.25;color:var(--muted)}
+.warm{position:relative;border:1pt solid var(--ink);border-radius:3.2mm;padding:2.2mm 3.4mm;margin:0 0 3.4mm;background:#fff}
+.warm:after{content:"";position:absolute;left:7mm;bottom:-1.75mm;width:3.2mm;height:3.2mm;background:#fff;border-right:1pt solid var(--ink);border-bottom:1pt solid var(--ink);transform:rotate(45deg)}
+.warm .q{display:block;font-family:var(--serif);font-style:italic;font-size:11.4pt;line-height:1.3;color:var(--ink);margin-top:.6mm}
+.text{position:relative;font-family:var(--serif);font-size:10pt;line-height:1.52;padding:1.4mm 0 1.8mm;margin-bottom:1.6mm;border-top:.6pt dotted var(--ink2);border-bottom:.6pt dotted var(--ink2)}
+.text:before{content:"«";position:absolute;left:-12.5mm;top:-1mm;font-family:var(--disp);font-size:36pt;color:var(--red);line-height:1}
+.text .lbl{display:block;font-family:var(--sans);font-size:7pt;letter-spacing:.16em;text-transform:uppercase;color:var(--red);font-weight:600;margin-bottom:.6mm}
+ol.qs{margin:0;padding:0;list-style:none;counter-reset:q;font-size:8.7pt}
+ol.qs li{counter-increment:q;padding-left:7mm;position:relative;margin-bottom:.5mm}
+ol.qs li:before{content:"Q" counter(q);position:absolute;left:0;font-weight:700;font-stretch:75%;color:var(--red)}
+.steps{display:grid;grid-template-columns:repeat(6,1fr);gap:1.6mm;margin-bottom:2mm;align-items:end}
+.steps div{font-size:6.8pt;line-height:1.2;color:var(--ink2)}
+.steps div:before{content:"";display:block;height:var(--h);background:var(--ink);margin-bottom:1mm;border-radius:.3mm}
+.steps div:nth-child(n+5):before{background:var(--red)}
 .steps b{display:block;color:var(--ink);font-size:7.2pt}
-.imit{margin:0 0 1.6mm;padding:0;list-style:none}
-.imit li{font-size:9.6pt;padding:1.1mm 0 1.1mm 6mm;border-bottom:.5pt dotted var(--line);position:relative}
-.imit li:before{content:"›";position:absolute;left:1mm;color:var(--accent);font-weight:700}
-.pron{display:grid;grid-template-columns:34mm 1fr;gap:3mm;background:var(--plum-soft);border-radius:1.6mm;padding:2mm 3mm;font-size:8.3pt}
-.pron .pt{font-family:Georgia,serif;color:var(--plum);font-size:10pt;line-height:1.2}
-.pron .pt small{display:block;font-family:"Segoe UI",sans-serif;font-size:6.6pt;letter-spacing:.12em;text-transform:uppercase;margin-bottom:.6mm}
-.pron .ph2{font-family:Georgia,serif;font-size:9.4pt;margin-top:1mm;color:var(--ink)}
-.reg{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5mm;margin-top:1.6mm}
-.reg div{border:.6pt solid var(--line);border-radius:1.4mm;padding:1.2mm 2mm;font-size:8.2pt}
-.reg b{display:block;font-size:6.6pt;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+.imit{margin:0 0 2mm;padding:0;list-style:none}
+.imit li{font-family:var(--serif);font-size:10.6pt;padding:1mm 0 .9mm;line-height:1.5}
+.pron{display:grid;grid-template-columns:36mm 1fr;gap:3.4mm;background:var(--blue-soft);border-radius:1mm;padding:2.2mm 3mm;font-size:8.1pt;margin-bottom:1mm}
+.pron .pt{font-family:var(--disp);color:var(--ink);font-size:12pt;line-height:1.15}
+.pron .pt small{display:block;font-family:var(--sans);font-size:6.6pt;letter-spacing:.16em;text-transform:uppercase;color:var(--red);margin-bottom:.8mm}
+.pron .ph2{font-family:var(--serif);font-size:10pt;margin-top:1.4mm;color:var(--ink)}
+.reg{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:2.4mm;margin-top:3mm;padding-top:7mm}
+.reg:before{content:"Registre — du plus familier au plus professionnel  →";position:absolute;top:0;left:0;font-size:6.8pt;letter-spacing:.06em;color:var(--ink2)}
+.reg:after{content:"";position:absolute;top:5mm;left:1mm;right:1mm;height:1.6pt;background:linear-gradient(90deg,#C9CCD8,var(--ink))}
+.reg div{position:relative;font-family:var(--serif);font-size:8.8pt}
+.reg div:before{content:"";position:absolute;top:-3.25mm;left:0;width:2.6mm;height:2.6mm;border-radius:50%;background:var(--paper);border:1.2pt solid var(--ink)}
+.reg div:nth-child(1):before{border-color:#AEB2C3}.reg div:nth-child(3):before{background:var(--ink)}
+.reg b{display:block;font-family:var(--sans);font-size:6.6pt;font-weight:600;color:var(--ink2);letter-spacing:.06em;margin-bottom:.3mm}
 
-/* dialogue */
-.dlg{border-radius:1.8mm;background:#fff;border:.7pt solid var(--line);padding:2.2mm 3mm}
-.dlg .ctx{font-size:8.2pt;color:var(--muted);margin-bottom:1.4mm}
-.dlg .ctx b{color:var(--ink)}
-.ln{display:grid;grid-template-columns:23mm 1fr;gap:2mm;padding:.7mm 0;font-size:9.1pt}
-.ln .who{font-size:7.3pt;font-weight:600;letter-spacing:.04em;color:var(--teal);text-align:right;padding-top:.5mm}
-.ln.b .who{color:var(--accent)}
-.ln.me .say{border:1pt dashed var(--accent);border-radius:1.4mm;padding:1mm 2mm;background:var(--accent-soft);color:var(--accent);font-size:8.4pt}
-.ln.me .say b{font-weight:600}
-.var{margin-top:1.6mm;background:var(--gold-soft);border-radius:1.6mm;padding:1.8mm 3mm;font-size:8.3pt}
-.var b.h{font-size:6.8pt;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:.6mm}
-.var div{margin-bottom:.5mm}
+/* ---------- dialogue : script de théâtre ---------- */
+.dlg .ctx{font-family:var(--serif);font-style:italic;font-size:9pt;color:var(--ink2);margin-bottom:1.6mm}
+.dlg .ctx b{font-style:normal;font-family:var(--sans);font-size:7pt;letter-spacing:.14em;text-transform:uppercase;color:var(--red);margin-right:1.6mm}
+.ln{display:grid;grid-template-columns:22mm 1fr;gap:2.6mm;padding:.8mm 0;font-family:var(--serif);font-size:9.7pt;line-height:1.38}
+.ln .who{font-family:var(--sans);font-size:7pt;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);text-align:right;padding-top:.9mm}
+.ln .say:before{content:"— ";color:var(--faint)}
+.ln.b .who{color:var(--ink)}
+.ln.me .who{color:var(--red)}
+.ln.me .say{color:var(--red);font-style:italic;border-bottom:.8pt solid var(--red);padding-bottom:5.5mm}
+.ln.me .say:before{content:"✎ ";font-style:normal}
+.ln.me .say b{font-family:var(--sans);font-style:normal;font-size:7.2pt;letter-spacing:.08em;font-weight:700}
+.var{margin-top:2.6mm;padding-top:2mm;border-top:.6pt solid var(--rule);font-family:var(--serif);font-size:9pt}
+.var b.h{display:block;font-family:var(--sans);font-size:7pt;letter-spacing:.14em;text-transform:uppercase;color:var(--red);margin-bottom:1mm}
+.var div{padding-left:5mm;position:relative;margin-bottom:.7mm}
+.var div:before{content:"≈";position:absolute;left:0;color:var(--red);font-weight:700}
 
-/* writing */
+/* ---------- écriture : cahier Seyès ---------- */
 .flexcol{display:flex;flex-direction:column;height:100%}
-.grow{flex:1 1 auto;min-height:12mm}
+.grow{flex:1 1 auto;min-height:8mm}
 .growcol{display:flex;flex-direction:column}
-.lines{background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 7.2mm,#c9ced8 7.2mm,#c9ced8 7.45mm);border-radius:1mm}
-.lines.sm{background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 6.4mm,#c9ced8 6.4mm,#c9ced8 6.65mm)}
-.wtask{display:grid;grid-template-columns:1fr 1fr;gap:3mm;margin-bottom:1.4mm}
-.wtask div{font-size:8.5pt;border-left:2pt solid var(--accent);padding-left:2.4mm}
-.wtask b{display:block;font-size:6.8pt;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
-.wflow{font-size:7.6pt;color:var(--muted);margin-bottom:1mm}
+.lines{background-color:#fff;background-image:linear-gradient(to bottom,var(--sy-major) .55pt,transparent .55pt),linear-gradient(to bottom,var(--sy-minor) .35pt,transparent .35pt),linear-gradient(to right,var(--sy-minor) .35pt,transparent .35pt);
+ background-size:100% 8mm,100% 2mm,8mm 100%;background-position:0 7.9mm,0 0,0 0;border:.4pt solid var(--sy-minor)}
+.wtask{display:grid;grid-template-columns:1fr 1fr;gap:5mm;margin-bottom:1.4mm}
+.wtask div{position:relative;font-size:8.4pt;padding-left:6mm}
+.wtask div:before{position:absolute;left:0;top:-1.6mm;font-family:var(--disp);font-style:italic;font-size:17pt;color:var(--red)}
+.wtask div:nth-child(1):before{content:"A"}.wtask div:nth-child(2):before{content:"B"}
+.wtask b{display:block;font-family:var(--serif);font-style:italic;font-weight:normal;font-size:9.4pt;color:var(--ink)}
+.wflow{font-size:7.6pt;color:var(--ink2);margin-bottom:1mm}
 
-.speak{border:1.2pt solid var(--ink);border-radius:1.8mm;padding:2.2mm 3mm;font-size:9pt}
-.speak .ttl{font-size:6.8pt;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:700}
-.speak .tk{font-family:Georgia,serif;font-size:10.4pt;margin:.6mm 0 1mm}
-.tools{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2.4mm;margin-top:2.2mm}
-.tools div{background:var(--soft);border-radius:1.4mm;padding:1.6mm 2.4mm;font-size:8pt;line-height:1.35}
-.tools b{display:block;font-size:6.6pt;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);margin-bottom:.4mm}
-.tools i{font-family:Georgia,serif;font-size:8.8pt;color:var(--ink)}
+/* ---------- défi oral : enregistrement ---------- */
+.speak{border:1.3pt solid var(--ink);border-radius:1mm;padding:2.4mm 3.4mm;font-size:8.8pt;background:#fff;margin-bottom:1mm}
+.speak .ttl{font-size:7.2pt;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);font-weight:600}
+.speak .ttl:before{content:"●";color:var(--red);margin-right:1.2mm;font-size:9pt}
+.speak .ttl i{font-style:normal;color:var(--red);font-weight:700;margin-right:2mm}
+.speak .tk{font-family:var(--serif);font-size:11.2pt;line-height:1.35;margin:.8mm 0 .6mm}
+.tools{display:grid;grid-template-columns:1fr 1fr 1fr;margin-top:2mm;border-top:.6pt solid var(--rule)}
+.tools div{padding:1.6mm 2.4mm 0;font-size:7.8pt;line-height:1.35;border-left:.6pt solid var(--rule)}
+.tools div:first-child{border-left:none;padding-left:0}
+.tools b{display:block;font-size:6.8pt;letter-spacing:.1em;text-transform:uppercase;color:var(--red);margin-bottom:.4mm;font-weight:600}
+.tools i{font-family:var(--serif);font-size:9pt;color:var(--ink)}
 
-/* bilan */
-.bilan{display:grid;grid-template-columns:1.75fr 1fr;gap:3.5mm;margin-top:1.6mm}
-table.corr{width:100%;border-collapse:collapse;font-size:7.4pt}
-table.corr th{text-align:left;font-weight:600;color:var(--muted);border-bottom:.8pt solid var(--ink);padding:.6mm 1mm}
-table.corr td{height:8.4mm;border-bottom:.6pt solid var(--line);border-right:.6pt solid var(--line)}
+/* ---------- bilan : stylo rouge ---------- */
+.bilan{display:grid;grid-template-columns:1.75fr 1fr;gap:4mm;margin-top:1.6mm}
+table.corr{width:100%;border-collapse:collapse;font-size:7.4pt;background:#fff}
+table.corr th{text-align:left;font-family:var(--serif);font-style:italic;font-weight:normal;font-size:8.6pt;color:var(--red);border-bottom:1pt solid var(--red);padding:.6mm 1.2mm}
+table.corr td{height:8.4mm;border-bottom:.6pt solid var(--sy-major);border-right:.6pt solid var(--sy-minor)}
 table.corr td:last-child{border-right:none;width:8mm;text-align:center;color:var(--faint)}
-.selfev{font-size:8pt}
-.selfev .row{display:flex;justify-content:space-between;align-items:center;padding:.9mm 0;border-bottom:.5pt dotted var(--line)}
-.dots span{display:inline-block;width:3.4mm;height:3.4mm;border:.8pt solid var(--faint);border-radius:50%;margin-left:1mm;font-size:5.5pt;text-align:center;line-height:3.2mm;color:var(--faint)}
-.check{display:flex;align-items:center;gap:1.6mm;margin-top:1.4mm;font-size:8pt}
-.box{display:inline-block;width:3.6mm;height:3.6mm;border:1pt solid var(--ink);border-radius:.6mm;flex:none}
+.selfev{font-size:7.9pt}
+.selfev .row{display:flex;justify-content:space-between;align-items:center;padding:1mm 0;border-bottom:.5pt dotted var(--rule)}
+.dots{display:inline-flex}
+.dots span{display:inline-block;width:3.6mm;height:3.6mm;border:.8pt solid var(--ink2);border-left:none;font-size:5.4pt;text-align:center;line-height:3.4mm;color:var(--faint);background:#fff}
+.dots span:first-child{border-left:.8pt solid var(--ink2)}
+.check{display:flex;align-items:center;gap:1.6mm;margin-top:1.4mm;font-size:7.9pt}
+.box{display:inline-block;width:3.6mm;height:3.6mm;border:1pt solid var(--ink);flex:none;background:#fff}
 
-/* claude */
-.claude{margin-top:2.4mm;border-radius:1.8mm;background:#1f2533;color:#e9ecf2;padding:2.4mm 3.4mm;font-size:7.75pt;line-height:1.42}
-.claude .hd{display:flex;justify-content:space-between;font-size:6.8pt;letter-spacing:.14em;text-transform:uppercase;color:#f0a37f;margin-bottom:1mm;font-weight:600}
-.claude .hd span{color:#9aa3b5}
-.claude .body{font-family:"Consolas","Cascadia Mono",monospace;font-size:7.5pt;color:#f3f5f9}
-.recall{background:var(--teal-soft);border-radius:1.6mm;padding:1.8mm 3mm;font-size:8.2pt;margin-top:2mm}
-.recall b.h{font-size:6.8pt;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);display:block;margin-bottom:.4mm}
-.short{font-size:7.6pt;color:var(--muted);margin-top:1.2mm;border-top:.6pt solid var(--line);padding-top:1.2mm}
-.short b{color:var(--gold)}
+/* ---------- prompt Claude : ticket à découper ---------- */
+.claude{position:relative;margin-top:3.4mm;border:1pt dashed var(--ink2);border-radius:1.2mm;background:#F3EFE6;padding:2.6mm 3.4mm 2.4mm;font-size:7.6pt;line-height:1.45}
+.claude:before{content:"✂";position:absolute;left:4mm;top:-2.4mm;background:var(--paper);padding:0 1mm;font-size:9pt;color:var(--ink2);line-height:1}
+.claude .hd{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--serif);font-size:10pt;color:var(--ink);margin-bottom:1mm}
+.claude .hd span{font-family:var(--sans);font-size:6.8pt;letter-spacing:.12em;text-transform:uppercase;color:var(--red)}
+.claude .body{font-family:var(--mono);font-size:7.25pt;color:var(--ink)}
+.recall{position:relative;background:var(--note);padding:2mm 3.4mm 2mm;font-size:8.1pt;margin-top:2.6mm;clip-path:polygon(0 0,100% 0,100% calc(100% - 4mm),calc(100% - 4mm) 100%,0 100%)}
+.recall:after{content:"";position:absolute;right:0;bottom:0;width:4mm;height:4mm;background:linear-gradient(135deg,#C3CFEA 50%,transparent 50%)}
+.recall b.h{display:block;font-family:var(--serif);font-style:italic;font-weight:normal;font-size:9.4pt;color:var(--ink);margin-bottom:.6mm}
+.short{font-size:7.6pt;color:var(--ink2);margin-top:1.2mm;border-top:.6pt solid var(--rule);padding-top:1.2mm}
 
-/* generic blocks */
-.card{border:.7pt solid var(--line);border-radius:2mm;padding:3mm 4mm;margin-bottom:3mm}
-.card h3{font-size:12pt;margin-bottom:1.4mm}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:4mm}
-.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3.5mm}
-.lead{font-family:Georgia,serif;font-size:11.5pt;line-height:1.55;color:var(--ink)}
+/* ---------- blocs éditoriaux ---------- */
+.card{border:none;border-top:1.3pt solid var(--ink);border-radius:0;padding:2.4mm 0 0;margin-bottom:4mm}
+.card h3{font-family:var(--serif);font-size:13pt;margin-bottom:1.6mm;color:var(--ink)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:6mm}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5mm}
+.lead{font-family:var(--serif);font-size:11.6pt;line-height:1.55;color:var(--ink)}
 ul.clean{margin:0;padding-left:4.5mm}
 ul.clean li{margin-bottom:1mm}
-table.t{width:100%;border-collapse:collapse;font-size:8.3pt}
-table.t th{text-align:left;font-size:7pt;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:1pt solid var(--ink);padding:1.2mm 1.5mm}
-table.t td{border-bottom:.6pt solid var(--line);padding:1.3mm 1.5mm;vertical-align:top}
-.field{border-bottom:.8pt solid #c9ced8;height:7.4mm}
-.fieldlbl{font-size:7.2pt;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-top:2.2mm}
-.fieldhelp{font-size:7.8pt;color:var(--muted)}
+ul.clean li::marker{color:var(--red)}
+table.t{width:100%;border-collapse:collapse;font-size:8.2pt}
+table.t th{text-align:left;font-size:6.9pt;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);border-bottom:1pt solid var(--ink);padding:1.2mm 1.5mm;font-weight:600}
+table.t td{border-bottom:.6pt solid var(--rule);padding:1.3mm 1.5mm;vertical-align:top}
+.field{border-bottom:.8pt solid var(--sy-major);height:7.4mm}
+.fieldlbl{font-size:7.2pt;letter-spacing:.12em;text-transform:uppercase;color:var(--red);font-weight:600;margin:2.4mm 0 .6mm}
+.fieldhelp{font-family:var(--serif);font-style:italic;font-size:8.6pt;color:var(--ink2)}
 a{color:inherit;text-decoration:none}
+table.grid td{border:.6pt solid var(--sy-major);height:8.4mm;background:#fff}
+table.grid td:first-child{background:transparent;border-left:none}
+.wave{display:block}
+
 """
 
 
@@ -191,18 +260,19 @@ class Book:
         self.pages = []      # html strings
         self.anchors = {}    # key -> page number (1-based)
 
-    def add(self, body, left="", right="", foot_left="", anchor=None, bare=False):
+    def add(self, body, left="", right="", foot_left="", anchor=None, bare=False, cls="", prog=None):
         n = len(self.pages) + 1
         if anchor:
             self.anchors[anchor] = n
         aid = f' id="{anchor}"' if anchor else ""
         if bare:
-            self.pages.append(f'<section class="page"{aid}>{body}</section>')
+            self.pages.append(f'<section class="page {cls}"{aid}>{body}</section>')
         else:
+            pg = f'<div class="prog"><i style="width:{prog * 100:.1f}%"></i></div>' if prog is not None else ""
             self.pages.append(
-                f'<section class="page"{aid}><div class="ph"><span>{left}</span><span>{right}</span></div>'
+                f'<section class="page {cls}"{aid}><div class="ph"><span>{left}</span><span>{right}</span></div>'
                 f'<div class="content">{body}</div>'
-                f'<div class="pf"><span>{foot_left}</span><span class="num">{n}</span></div></section>')
+                f'<div class="pf"><span>{foot_left}</span><span class="num">{n}</span>{pg}</div></section>')
         return n
 
 
@@ -235,7 +305,7 @@ MODE_TABLE = {
 
 
 def speak_dur(p):
-    return {1: "1 minute", 2: "1 à 2 minutes", 3: "2 minutes", 4: "3 minutes", 5: "3 à 5 minutes", 6: "5 minutes ou plus"}[p["n"]]
+    return {1: "1 minute", 2: "1 à 2 minutes", 3: "2 minutes", 4: "3 minutes", 5: "3 à 4 minutes", 6: "4 à 5 minutes"}[p["n"]]
 
 
 def claude_prompt(day, p):
@@ -254,7 +324,7 @@ def claude_prompt(day, p):
              "Puis demande-moi de reformuler le message en commençant par « Si j'ai bien compris… ». "
              f"Termine par un mini-dialogue où tu joues : {day['a']}.")
     elif mode == "presentation":
-        m = (f"MODE PRÉSENTATION. Je vais parler {speak_dur(p)} sans lire sur : {day['speak']} "
+        m = (f"MODE PRÉSENTATION. Je vais parler sans lire (durée indiquée dans la consigne, sinon {speak_dur(p)}) sur : {day['speak']} "
              "Ne m'interromps pas. Ensuite, pose-moi 2 questions de relance, une par une. "
              "Termine par un point fort réel, 3 corrections maximum et la phrase que je dois redire.")
     else:
@@ -267,22 +337,39 @@ def claude_prompt(day, p):
 
 # ------------------------------------------------------------------ day pages
 COLORS = ["#8a92a3", "#1d6a73", "#5b4a8b", "#b8502a", "#a87b22", "#1c2333", "#5d6678"]
-STEPS_NORMAL = [("Échauffement", 4), ("Écoute", 10), ("Lecture", 10), ("Écriture", 12),
+STEPS_NORMAL = [("Échauf.", 4), ("Écoute", 10), ("Lecture", 10), ("Écriture", 12),
                 ("Dialogue", 14), ("Parole", 5), ("Bilan", 5)]
 STEPS_LIGHT = [("Échauf.", 3), ("Écoute", 6), ("Lecture", 6), ("Écriture", 8),
                ("Dialogue", 10), ("Parole", 4), ("Bilan", 3)]
 
 
-def timeline(light):
-    steps = STEPS_LIGHT if light else STEPS_NORMAL
+SPEAKING = {"Échauf.", "Dialogue", "Parole"}
+
+
+def speak_minutes(day, light):
+    """Durée réelle du défi oral : 5 min (4 si légère), ou plus pour les simulations."""
+    base = 4 if light else 5
+    t = day["speak"].lower()
+    found = [int(n) for n in re.findall(r"(\d+)\s*min", t)]
+    m = max(found) if found else 0
+    if ("simulation" in t and "complète" in t) or "répétition générale" in t:
+        m = max(m, 35)
+    return max(base, m)
+
+
+def timeline(light, parole=None):
+    steps = list(STEPS_LIGHT if light else STEPS_NORMAL)
+    if parole:
+        steps = [(n, parole if n == "Parole" else m) for n, m in steps]
     total = sum(m for _, m in steps)
-    segs = "".join(f'<div style="flex:{m};background:{COLORS[i]}">{n} {m}′</div>' for i, (n, m) in enumerate(steps))
-    return total, f'<div class="timeline">{segs}</div>'
+    segs = "".join(f'<div class="seg{" spk" if n in SPEAKING else ""}" style="flex:{m};--m:{m}">'
+                   f'<span class="lab">{n}</span><span class="min">{m} min</span></div>' for n, m in steps)
+    return total, f'<div class="ruler">{segs}</div>'
 
 
 def sh(n, t, m=""):
-    mm = f'<span class="m">{m}</span>' if m else ""
-    return f'<div class="sh"><span class="n">{n}</span><span class="t">{t}</span>{mm}</div>'
+    mm = f'<small>{m}</small>' if m else ""
+    return f'<div class="sh"><span class="n">{n:02d}{mm}</span><span class="t">{t}</span></div>'
 
 
 def render_dialogue(day):
@@ -294,7 +381,7 @@ def render_dialogue(day):
         short = name.split(",")[0].split("(")[0].strip()
         if txt.startswith("?"):
             rows.append(f'<div class="ln b me"><span class="who">{esc(short)}</span>'
-                        f'<span class="say"><b>À toi, sans modèle —</b> {esc(txt[1:].strip())}</span></div>')
+                        f'<span class="say"><b>À TOI, SANS MODÈLE</b> · {esc(txt[1:].strip())}</span></div>')
         else:
             cls = "a" if who == "A" else "b"
             rows.append(f'<div class="ln {cls}"><span class="who">{esc(short)}</span><span class="say">{esc(txt)}</span></div>')
@@ -306,7 +393,12 @@ def add_day(book, day, idx, all_days, week_no, num=None):
     num = num or idx + 1
     p = phase_of(d)
     light = day["light"]
-    total, tl = timeline(light)
+    parole = speak_minutes(day, light)
+    long_session = parole > 5
+    total, tl = timeline(light, parole)
+    warm_txt = "3 minutes" if light and p["n"] >= 4 else p["warm"]
+    found = re.findall(r"(\d+\s*min(?:utes?)?)", day["speak"])
+    dur_label = f"{parole} min" if long_session else speak_dur(p)
     pron = PRON[(idx * 5) % len(PRON)] if idx % 2 == 0 else PRON[(idx * 3 + 7) % len(PRON)]
     rescue = RESCUE[idx % len(RESCUE)]
     rescue_old = RESCUE[(idx - 4) % len(RESCUE)]
@@ -316,38 +408,41 @@ def add_day(book, day, idx, all_days, week_no, num=None):
     left = f"{TITLE} · <b>Phase {p['n']}</b> · {p['name']}"
     right = f"Semaine {week_no} · {MOIS[d.month]} {d.year}"
     foot = f"Jour {num:03d} / 166 · {fdate(d)}"
-    chips = [f'<span class="chip a">Phase {p["n"]}</span>', f'<span class="chip">{total} min</span>',
-             f'<span class="chip">{MODE_NAMES[mode]}</span>']
-    if light:
-        chips.insert(1, '<span class="chip l">Séance légère</span>')
+    stamps = []
     if day["tag"]:
-        chips.insert(1, f'<span class="chip l">{esc(day["tag"])}</span>')
+        stamps.append(f'<span class="stamp">{esc(day["tag"])}</span>')
+    if light:
+        stamps.append('<span class="stamp ink">Séance légère</span>')
+    if long_session:
+        stamps.append(f'<span class="stamp ink">Séance longue · {total} min</span>')
+    prog = num / 166
 
     reg = ""
     if day["reg"]:
         f_, n_, p_ = day["reg"]
-        reg = (f'<div class="reg"><div><b>Familier</b>{esc(f_)}</div><div><b>Naturel</b>{esc(n_)}</div>'
-               f'<div><b>Professionnel</b>{esc(p_)}</div></div>')
+        reg = (f'<div class="reg"><div><b>FAMILIER · entre amis</b>{esc(f_)}</div><div><b>NATUREL · collègues</b>{esc(n_)}</div>'
+               f'<div><b>PROFESSIONNEL · jury, client</b>{esc(p_)}</div></div>')
 
     imit = "".join(f"<li>{esc_groups(s)}</li>" for s in day["imit"])
     qs = "".join(f"<li>{esc(q)}</li>" for q in day["q"])
 
-    page1 = f"""
+    page1 = f"""<div class="flexcol">
 <div class="dayhead">
-  <div class="dnum"><small>Jour</small>{num:03d}</div>
-  <div class="dmeta"><div class="ddate">{fdate(d)}</div><div class="dtitle">{esc(day['t'])}</div></div>
-  <div class="chips">{''.join(chips)}</div>
+  <div class="dnum"><small>JOUR</small>{num:03d}</div>
+  <div class="ddate">{fdate(d).capitalize()}</div><div class="dtitle">{esc(day['t'])}</div>
+  <div class="dmetaline"><b>Phase {p['n']}</b> — {p['name']} · {total} minutes · {MODE_NAMES[mode]}</div>
+  <div class="stamps">{''.join(stamps)}</div>
 </div>
 <div class="trio">
-  <div><b>Ce que j'apprends</b>{esc(day['learn'])}</div>
-  <div><b>Pourquoi c'est utile</b>{esc(day['why'])}</div>
-  <div class="goal"><b>Objectif mesurable</b>{esc(day['obj'])}</div>
+  <div><b>J'apprends…</b>{esc(day['learn'])}</div>
+  <div><b>Pourquoi ?</b>{esc(day['why'])}</div>
+  <div class="goal"><b>Objectif du jour</b>{esc(day['obj'])}</div>
 </div>
 {tl}
-<div class="tlnote"><b>Version courte (20 min) :</b> échauffement 2′ · phrases à imiter 4′ · dialogue avec Claude 10′ · défi oral 4′.</div>
+<div class="tlnote">Les traits <b style="color:var(--red)">rouges</b> = tu parles. <b>Jour chargé ? Version 20 min :</b> échauffement 2′ · phrases à imiter 4′ · dialogue avec Claude 10′ · défi oral 4′.</div>
 
 {sh(1, "Échauffement — penser directement en français", ("3" if light else "4") + " min")}
-<div class="warm"><span class="muted small">Parle {p['warm']} sans t'arrêter, sans traduire. Si tu bloques, dis « {esc(rescue[0])} » et continue.</span><br>
+<div class="warm"><span class="muted small">Parle {warm_txt} sans t'arrêter, sans traduire. Bloqué ? Dis « {esc(rescue[0])} » et continue.</span>
 <span class="q">{esc(day['warm'])}</span></div>
 
 {sh(2, "Écoute et compréhension", ("6" if light else "10") + " min")}
@@ -357,16 +452,14 @@ def add_day(book, day, idx, all_days, week_no, num=None):
 
 {sh(3, "Lecture intelligente et imitation", ("6" if light else "10") + " min")}
 <div class="steps">
-<div><b>1 · Silence</b>comprendre le sens</div><div><b>2 · Lentement</b>articuler chaque son</div>
-<div><b>3 · Naturel</b>gagner en fluidité</div><div><b>4 · Imiter</b>copier l'intonation</div>
-<div><b>5 · Sans texte</b>retenir l'essentiel</div><div><b>6 · Résumé</b>dire avec mes mots</div></div>
-<div class="instr">Phrases à imiter : <b>lentement</b>, puis <b>à vitesse normale</b>, puis <b>dans une réponse à Claude</b>. Les barres <span class="sep">/</span> marquent les groupes de souffle.</div>
+<div style="--h:1mm"><b>1 · Silence</b>comprendre le sens</div><div style="--h:2mm"><b>2 · Lentement</b>articuler chaque son</div>
+<div style="--h:3mm"><b>3 · Naturel</b>gagner en fluidité</div><div style="--h:4mm"><b>4 · Imiter</b>copier l'intonation</div>
+<div style="--h:5mm"><b>5 · Sans texte</b>retenir l'essentiel</div><div style="--h:6mm"><b>6 · Résumé</b>dire avec mes mots</div></div>
+<div class="instr">Phrases à imiter : <b>lentement</b>, puis <b>à vitesse normale</b>, puis <b>dans une réponse à Claude</b>. Chaque <b>arc</b> = un souffle · <span style="white-space:nowrap"><span class="pause">‖</span>= une pause.</span></div>
 <ul class="imit">{imit}</ul>
-<div class="pron"><div class="pt"><small>Prononciation</small>{esc(pron[0])}</div>
-<div>{esc(pron[1])}<div class="ph2">{esc_groups(pron[2])}</div></div></div>
-{reg}
-"""
-    book.add(page1, left, right, foot, anchor=f"d{d.isoformat()}")
+<div class="fieldlbl" style="margin-top:2.4mm">Mes notes de lecture — mots nouveaux, sons difficiles, phrase que je veux garder</div><div class="lines sm grow"></div>
+</div>"""
+    book.add(page1, left, right, foot, anchor=f"d{d.isoformat()}", cls="day", prog=prog)
 
     # ---- page 2
     write_h = 40 if not light else 30
@@ -385,31 +478,34 @@ def add_day(book, day, idx, all_days, week_no, num=None):
         items = " ".join(f"<div>« {esc(x['imit'][1].replace(' // ', ' ').replace(' / ', ' '))} » <span class='muted'>(jour {(x['date'] - START).days + 1:03d})</span></div>" for x in recall_days)
         recall = f'<div class="recall"><b class="h">Réutilise aujourd\'hui, dans un autre contexte</b>{items}</div>'
 
-    var = "".join(f"<div>{esc(v)}</div>" for v in day["var"])
+    var = "".join(f"<div>{esc_or(v)}</div>" for v in day["var"])
     page2 = f"""<div class="flexcol">
+<div class="pron"><div class="pt"><small>Son du jour</small>{esc(pron[0])}</div>
+<div>{esc(pron[1])}<div class="ph2">{esc_groups(pron[2])}</div></div></div>
+{reg}
 {sh(4, "Atelier d'écriture et de réécriture", ("8" if light else "12") + " min")}
 <div class="wtask"><div><b>A · Réécriture</b>{esc(rew)}</div><div><b>B · Production</b>{esc(day['write'])}</div></div>
 <div class="wflow">Méthode : écris <b>sans regarder</b> le texte → compare avec l'original → corrige 3 points maximum → relis ta version <b>à voix haute</b>.</div>
-<div class="fieldlbl">A · Ma réécriture, avec mes mots</div>{lines(36)}
+<div class="fieldlbl">A · Ma réécriture, avec mes mots</div>{lines(32)}
 <div class="fieldlbl">B · Ma production</div><div class="lines grow"></div>
 
 {sh(5, "Dialogue réaliste", ("10" if light else "14") + " min")}
-<div class="dlg"><div class="ctx"><b>Situation :</b> {esc(day['ctx'])}</div>{render_dialogue(day)}
-<div class="var"><b class="h">Ne dépends pas d'une seule phrase — autres façons de dire</b>{var}</div></div>
+<div class="dlg"><div class="ctx"><b>Scène</b> {esc(day['ctx'])}</div>{render_dialogue(day)}
+<div class="var"><b class="h">≈ Autres façons de dire la même chose</b>{var}</div></div>
 <div class="instr" style="margin-top:1.4mm"><b>Comment pratiquer :</b> lis d'abord les deux rôles à voix haute · puis cache la colonne « Moi » et réponds de mémoire · enfin joue la scène avec Claude (prompt en page suivante), qui changera les répliques.</div>
 </div>"""
-    book.add(page2, left, right, foot)
+    book.add(page2, left, right, foot, cls="day", prog=prog)
 
     page3 = f"""<div class="flexcol">
-{sh(6, "Prise de parole sans lire", ("4" if light else "5") + " min")}
-<div class="speak"><div class="ttl">Défi oral · {speak_dur(p)} · enregistre-toi</div>
+{sh(6, "Prise de parole sans lire", f"{parole} min")}
+<div class="speak"><div class="ttl"><i>REC</i>Défi oral · {dur_label} · enregistre-toi</div>
 <div class="tk">{esc(day['speak'])}</div>
-<div class="tools"><div><b>Expression de secours</b><i>{esc(rescue[0])}</i><br><span class="muted">{esc(rescue[1])}</span></div>
+<div class="tools"><div><b>Si je bloque</b><i>{esc(rescue[0])}</i><br><span class="muted">{esc(rescue[1])}</span></div>
 <div><b>Connecteur à placer</b><i>{esc(conn[0])}</i> — {esc(conn[1])}<br><span class="muted">{esc(conn[2])}</span></div>
-<div><b>Rappel (vu avant)</b><i>{esc(rescue_old[0])}</i><br><span class="muted">À replacer naturellement.</span></div></div></div>
+<div><b>{"Rappel (vu avant)" if idx >= 4 else "À découvrir aussi"}</b><i>{esc(rescue_old[0])}</i><br><span class="muted">{"À replacer naturellement." if idx >= 4 else esc(rescue_old[1])}</span></div></div></div>
 {sat_review}{recall}
 
-<div class="claude"><div class="hd">À copier dans Claude · {MODE_NAMES[mode]}<span>une question à la fois</span></div>
+<div class="claude"><div class="hd">Prompt pour Claude — {MODE_NAMES[mode]}<span>copier tel quel</span></div>
 <div class="body">{esc(prompt)}</div></div>
 
 {sh(7, "Bilan et corrections", ("3" if light else "5") + " min")}
@@ -425,7 +521,7 @@ def add_day(book, day, idx, all_days, week_no, num=None):
 <div class="grid2 grow" style="margin-top:2.4mm"><div class="growcol"><div class="fieldlbl">Expressions utiles notées aujourd'hui</div><div class="lines sm grow"></div></div>
 <div class="growcol"><div class="fieldlbl">Ce que je sais faire maintenant · ce que je reprends demain</div><div class="lines sm grow"></div></div></div>
 </div>"""
-    book.add(page3, left, right, foot)
+    book.add(page3, left, right, foot, cls="day", prog=prog)
 
 
 # ------------------------------------------------------------------ Sunday pages
@@ -436,6 +532,9 @@ def add_sunday(book, d, week_no, sidx, week_days, idx):
     right = f"Semaine {week_no} · test oral du dimanche"
     foot = f"Jour {idx + 1:03d} / 166 · {fdate(d)}"
     listen = LISTEN[sidx % len(LISTEN)]
+    nxt = d + dt.timedelta(days=7)
+    month_note = ('<div class="instr" style="margin-top:1.6mm"><b style="color:var(--red)">Fin du mois →</b> après ce test, remplis la page '
+                  '« Évaluation mensuelle » qui suit et compare avec le mois précédent.</div>') if (nxt.month != d.month or nxt > END) else ""
     themes = "".join(f"<li><b>{x['date'].day:02d}/{x['date'].month:02d}</b> — {esc(x['t'])}</li>" for x in week_days)
     prompt = (f"Tu es mon examinateur bienveillant pour un test oral de français (niveau {p['level']}). "
               f"Thème de la semaine : « {t} ». Fais-moi passer 3 épreuves, une par une, et attends ma réponse à chaque fois : "
@@ -444,31 +543,33 @@ def add_sunday(book, d, week_no, sidx, week_days, idx):
               "(ma phrase → version naturelle → explication) et fais-moi redire ces 3 phrases. "
               "Ne juge pas ma prononciation si tu ne reçois que du texte. N'invente rien sur mon projet.")
     body = f"""
-<div class="dayhead"><div class="dnum"><small>Jour</small>{idx + 1:03d}</div>
-<div class="dmeta"><div class="ddate">{fdate(d)} · Test oral hebdomadaire</div><div class="dtitle">{esc(t)}</div></div>
-<div class="chips"><span class="chip a">Semaine {week_no}</span><span class="chip">45 min</span><span class="chip l">Test du dimanche</span></div></div>
-<div class="trio"><div><b>Ce que je vérifie</b>Ce que j'ai vraiment retenu cette semaine, sans relire mes notes.</div>
-<div><b>Pourquoi c'est utile</b>Parler sans préparation, c'est la situation réelle d'une soutenance.</div>
+<div class="dayhead"><div class="dnum"><small>JOUR</small>{idx + 1:03d}</div>
+<div class="ddate">{fdate(d).capitalize()}</div><div class="dtitle">{esc(t)}</div>
+<div class="dmetaline"><b>Semaine {week_no}</b> — test oral hebdomadaire · 45 minutes</div>
+<div class="stamps"><span class="stamp">Test oral</span></div></div>
+<div class="trio"><div><b>Je vérifie…</b>Ce que j'ai vraiment retenu cette semaine, sans relire mes notes.</div>
+<div><b>Pourquoi ?</b>Parler sans préparation, c'est la situation réelle d'une soutenance.</div>
 <div class="goal"><b>Règle du test</b>Tu t'enregistres. Tu ne t'arrêtes pas pour te corriger. Tu écoutes après.</div></div>
 
 {sh(1, "Préparation", "5 min")}
-<div class="warm">Respiration 4-4-6 (inspire 4 s, garde 4 s, expire 6 s) × 3. Relis seulement les titres de la semaine :<ul class="clean small" style="margin-top:1mm">{themes}</ul></div>
+<div class="warm">Respiration 4-4-6 (inspire 4 s, garde 4 s, expire 6 s) × 3. Relis seulement les titres de la semaine :<ul class="clean small" style="margin-top:1mm;columns:2;column-gap:6mm">{themes}</ul></div>
 
-{sh(2, "Épreuve 1", "")}<div class="speak"><div class="tk">{esc(t1)}</div></div>
-{sh(3, "Épreuve 2", "")}<div class="speak"><div class="tk">{esc(t2)}</div></div>
-{sh(4, "Épreuve 3", "")}<div class="speak"><div class="tk">{esc(t3)}</div></div>
+{sh(2, "Épreuve 1", "6 min")}<div class="speak"><div class="tk">{esc(t1)}</div></div>
+{sh(3, "Épreuve 2", "7 min")}<div class="speak"><div class="tk">{esc(t2)}</div></div>
+{sh(4, "Épreuve 3", "7 min")}<div class="speak"><div class="tk">{esc(t3)}</div></div>
 
+{month_note}
 {sh(5, "Écoute authentique de la semaine", "10 min")}
 <div class="instr">{esc(listen)}. Écoute une fois sans pause, note 3 idées, puis résume à voix haute en 1 minute avec « Si j'ai bien compris… ».</div>
-{lines(15, "lines sm")}
+{lines(8, "lines sm")}
 
 {sh(6, "Après l'écoute de mon enregistrement", "10 min")}
-<div class="grid2"><div><div class="fieldlbl">Ce qui est déjà mieux que la semaine dernière</div>{lines(20, "lines sm")}</div>
-<div><div class="fieldlbl">Ce que je veux améliorer en priorité</div>{lines(20, "lines sm")}</div></div>
+<div class="grid2"><div><div class="fieldlbl">Ce qui est déjà mieux que la semaine dernière</div>{lines(8, "lines sm")}</div>
+<div><div class="fieldlbl">Ce que je veux améliorer en priorité</div>{lines(8, "lines sm")}</div></div>
 
-<div class="claude"><div class="hd">À copier dans Claude · Test oral<span>une épreuve à la fois</span></div><div class="body">{esc(prompt)}</div></div>
+<div class="claude"><div class="hd">Prompt pour Claude — test oral<span>copier tel quel</span></div><div class="body">{esc(prompt)}</div></div>
 """
-    book.add(body, left, right, foot, anchor=f"d{d.isoformat()}")
+    book.add(body, left, right, foot, anchor=f"d{d.isoformat()}", cls="day", prog=(idx + 1) / 166)
 
     # weekly tracking page
     rows = "".join(
@@ -503,9 +604,10 @@ def add_month_eval(book, month, p):
 <h2 class="sec" style="margin-top:1mm">Où en suis-je à la fin de {name.lower()} ?</h2>
 <div class="grid2"><div class="card"><h3>Épreuves (enregistrées)</h3><p>{esc(tasks)}</p></div>
 <div class="card"><h3>Mesure objective</h3><p>{esc(measure)}</p></div></div>
-<table class="t"><tr><th>Critère et repères</th><th style="width:30mm">Note ce mois</th><th>Mois préc.</th></tr>{rows}</table>
-<div class="grid2" style="margin-top:3mm"><div><div class="fieldlbl">Mes trois progrès réels du mois</div>{lines(26, "lines sm")}</div>
-<div><div class="fieldlbl">Mes trois priorités pour le mois prochain</div>{lines(26, "lines sm")}</div></div>
+<table class="t"><tr><th>Critère et repères</th><th style="width:30mm">Note ce mois</th><th>{"Test initial" if month == 11 else "Mois préc."}</th></tr>{rows}</table>
+<div class="grid2" style="margin-top:3mm"><div><div class="fieldlbl">Mes trois progrès réels du mois</div>{lines(42, "lines sm")}</div>
+<div><div class="fieldlbl">Mes trois priorités pour le mois prochain</div>{lines(42, "lines sm")}</div></div>
+<div class="fieldlbl">La phrase que je dis maintenant sans effort (et que je ne savais pas dire avant)</div>{lines(16, "lines sm")}
 """
     book.add(body, f"{TITLE} · <b>Évaluation</b>", f"Phase {p['n']} · {p['name']}", f"Évaluation mensuelle · {name}",
              anchor=f"eval{month}")
@@ -513,21 +615,28 @@ def add_month_eval(book, month, p):
 
 # ------------------------------------------------------------------ front matter
 def cover(book):
+    seyes = ("background-image:linear-gradient(to bottom,#C9D3EC .5pt,transparent .5pt),linear-gradient(to bottom,#EAEEF7 .3pt,transparent .3pt),"
+             "linear-gradient(to right,#EAEEF7 .3pt,transparent .3pt);background-size:100% 8mm,100% 2mm,8mm 100%")
+    stats = "".join(f'<div style="border-top:1.4pt solid var(--ink);padding-top:2mm;width:27mm"><div style="font-stretch:75%;font-weight:700;font-size:22pt;line-height:1;color:var(--red)">{x}</div>'
+                    f'<div style="font-size:8pt;color:var(--ink2);margin-top:1mm">{y}</div></div>'
+                    for x, y in [("166", "jours de pratique"), ("23", "tests oraux"), ("6", "phases"), ("4", "modes avec Claude")])
     body = f"""
-<div style="position:absolute;inset:0;background:#1c2333"></div>
-<div style="position:absolute;left:0;top:0;bottom:0;width:9mm;background:#b8502a"></div>
-<div style="position:absolute;left:26mm;right:22mm;top:34mm;color:#fff">
- <div style="font-size:8pt;letter-spacing:.3em;text-transform:uppercase;color:#f0a37f">Programme quotidien · 16 novembre 2026 → 30 avril 2027</div>
- <div style="font-family:Georgia,serif;font-size:44pt;line-height:1.05;margin-top:12mm">Parler,<br>expliquer,<br><span style="color:#f0a37f">convaincre.</span></div>
- <div style="font-family:Georgia,serif;font-size:14pt;line-height:1.45;margin-top:10mm;color:#d7dbe4;max-width:140mm">
- 166 séances de français oral, écrit et professionnel pour présenter mon projet de fin d'études avec assurance, clarté et naturel.</div>
- <div style="display:flex;gap:7mm;margin-top:16mm;font-size:8.5pt;color:#c4cad6">
-  {''.join(f'<div style="border-top:1.4pt solid #f0a37f;padding-top:2mm;width:22mm"><div style="color:#fff;font-family:Georgia,serif;font-size:12pt">{x}</div>{y}</div>' for x, y in [("166","séances"),("23","tests oraux"),("6","phases"),("4","modes avec Claude")])}
- </div>
+<div style="position:absolute;inset:0;background:var(--paper)"></div>
+<div style="position:absolute;left:30mm;right:0;top:0;bottom:0;{seyes};opacity:.75"></div>
+<div style="position:absolute;left:30mm;top:0;bottom:0;border-left:1.2pt solid var(--margin)"></div>
+<div style="position:absolute;left:12mm;top:30mm;width:14mm;text-align:right;font-stretch:75%;font-weight:700;font-size:9pt;line-height:1.3;color:var(--red)">16.11<br>2026<br><span style="color:var(--faint)">↓</span><br>30.04<br>2027</div>
+<div style="position:absolute;left:38mm;right:18mm;top:28mm">
+ <div class="kicker">Carnet de voix · français oral &amp; professionnel</div>
+ <div style="font-family:var(--disp);font-size:58pt;line-height:.98;margin-top:9mm;color:var(--ink);letter-spacing:-.01em">Parler,<br>expliquer,<br><span style="color:var(--red);font-style:italic">convaincre.</span></div>
+ <div style="font-family:var(--serif);font-size:13.5pt;line-height:1.5;margin-top:9mm;color:var(--ink2);max-width:128mm;background:var(--paper);padding:1mm 0">
+ Un entraînement quotidien pour passer de « je cherche mes mots » à une soutenance d'ingénieur claire, calme et convaincante.</div>
 </div>
-<div style="position:absolute;left:26mm;right:22mm;bottom:30mm;color:#c4cad6;font-size:9pt;border-top:.6pt solid #3a4357;padding-top:5mm;display:flex;justify-content:space-between">
- <div>Cycle ingénieur · Génie logiciel<br><span style="color:#fff">Préparation à la soutenance — avril 2027</span></div>
- <div style="text-align:right">Ce carnet appartient à<br><span style="display:inline-block;width:62mm;border-bottom:.8pt solid #f0a37f;height:6mm"></span></div>
+<div style="position:absolute;left:30mm;right:0;top:176mm">{wave(180, 34, 1.0, 190, "#D6402B", 0.4)}</div>
+<div style="position:absolute;left:38mm;right:18mm;top:222mm;display:flex;gap:6mm;background:var(--paper);padding:2mm 0">{stats}</div>
+<div style="position:absolute;left:38mm;right:18mm;bottom:22mm;display:flex;justify-content:space-between;align-items:flex-end;background:var(--paper);padding-top:2mm">
+ <div style="font-size:8.5pt;color:var(--ink2);line-height:1.5">Cycle ingénieur · génie logiciel<br><span style="color:var(--ink);font-family:var(--serif);font-size:10.5pt">Préparation à la soutenance — avril 2027</span></div>
+ <div style="text-align:right;font-size:8pt;color:var(--ink2)">Ce carnet appartient à<br>
+ <span style="display:inline-block;width:64mm;height:7mm;margin-top:1mm;background:linear-gradient(transparent 35%,var(--hl) 35%,var(--hl) 90%,transparent 90%)"></span></div>
 </div>"""
     book.add(body, bare=True)
 
@@ -550,9 +659,13 @@ def usage(book):
 <ul class="clean"><li>Échauffement : 2 min</li><li>Les 3 phrases à imiter : 4 min</li><li>Dialogue du jour avec Claude (prompt prêt) : 10 min</li><li>Défi oral enregistré : 4 min</li></ul>
 <p class="small muted" style="margin-top:2mm">Coche « Version courte » dans le bilan. Une séance courte vaut mieux qu'une séance oubliée.</p>
 <h3 style="margin-top:3mm">Le rythme de la semaine</h3>
-<ul class="clean"><li><b>Lundi → vendredi :</b> séances complètes</li><li><b>Samedi :</b> séance plus légère + révision intelligente</li><li><b>Dimanche :</b> test oral + page de suivi</li><li><b>Fin de mois :</b> évaluation mensuelle</li></ul></div></div>
+<ul class="clean"><li><b>Lundi → vendredi :</b> séances complètes</li><li><b>Samedi :</b> séance plus légère + révision intelligente</li><li><b>Dimanche :</b> test oral + page de suivi</li><li><b>Fin de mois :</b> évaluation mensuelle</li><li><b>Mars–avril :</b> quelques séances longues (65 à 90 min, tampon « Séance longue ») pour les simulations</li></ul></div></div>
 <div class="grid3">
-<div class="card"><h3>Repères visuels</h3><p class="small"><span style="color:var(--teal)">■</span> Texte et écoute · <span style="color:var(--plum)">■</span> Prononciation · <span style="color:var(--gold)">■</span> Variantes · <span style="color:var(--accent)">■</span> Ton tour de parler · <span style="color:var(--ink)">■</span> Prompt Claude</p></div>
+<div class="card"><h3>Lire une page en 5 secondes</h3><ul class="clean small">
+<li><b style="color:var(--red)">Rouge</b> : à toi de parler ou de corriger</li>
+<li><span class="fill">surligné</span> : à compléter avec ton projet</li>
+<li><span class="g">arc</span> = un souffle · <span class="pause">‖</span>=&nbsp;une pause</li>
+<li><b style="color:var(--red)">● REC</b> : enregistre-toi · <b>✂</b> : prompt pour Claude</li></ul></div>
 <div class="card"><h3>Les champs à compléter</h3><p class="small">Quand tu vois <span class="fill">nom du projet</span>, remplace par l'information réelle de ton projet. Rien n'est inventé à ta place.</p></div>
 <div class="card"><h3>Matériel</h3><p class="small">Ce carnet (imprimé ou PDF), un stylo, ton téléphone pour t'enregistrer, Claude (texte ou vocal), un chronomètre.</p></div></div>
 <div class="card" style="border-color:var(--accent)"><h3>Les quatre règles d'or</h3>
@@ -585,7 +698,7 @@ def methods(book):
 <tr><td>J'ai fait un test pour voir si ça marche ou non.</td><td>J'ai fait un test pour vérifier que ça marchait.</td><td>Plus précis et plus naturel à l'oral pro.</td><td>Utilise « vérifier que » au daily de demain.</td></tr>
 <tr><td>Le projet il est basé sur…</td><td>Le projet repose sur… / Mon projet est basé sur…</td><td>Évite de répéter le sujet (« le projet il ») en contexte formel.</td><td>À redire dans ton pitch de 1 minute.</td></tr></table>
 <p class="small muted" style="margin-top:2mm">Corrige-toi toi-même d'abord : réécoute ton enregistrement, entoure ce qui te gêne, propose ta correction, puis vérifie avec Claude.</p></div>
-<div class="grid2"><div class="card"><h3>Penser directement en français</h3><p class="small">Chaque échauffement te demande de décrire ce que tu fais, vois, penses ou prévois — à voix haute, sans traduire. La durée augmente : <b>30 s</b> en novembre, <b>1 min</b> en décembre, <b>2 min</b> en janvier, <b>3 min</b> en février, <b>4 à 5 min</b> en mars et avril. Si un mot manque, décris-le au lieu de t'arrêter.</p></div>
+<div class="grid2"><div class="card"><h3>Penser directement en français</h3><p class="small">Chaque échauffement te demande de décrire ce que tu fais, vois, penses ou prévois — à voix haute, sans traduire. La durée augmente : <b>30 s</b> en novembre, <b>1 min</b> en décembre, <b>2 min</b> en janvier, <b>3 min</b> en février, <b>4 min</b> en mars et avril (3 min les jours de séance légère). Si un mot manque, décris-le au lieu de t'arrêter.</p></div>
 <div class="card"><h3>Écouter de vrais Français</h3><p class="small">Le texte du jour s'écoute avec la lecture à voix haute d'Edge (voix naturelles) ou avec Claude en mode vocal. Chaque dimanche, ajoute une écoute authentique : RFI « Journal en français facile », TV5MONDE, InnerFrench, France Info, conférences tech en français.</p></div></div>
 """
     book.add(body, TITLE, "Méthodes", "Méthodes", anchor="methods")
@@ -628,7 +741,7 @@ def claude_pages(book):
         ("Mode simulation de jury", "Claude devient membre du jury : questions faciles, techniques, critiques et imprévues. Si tu bloques, il propose une expression de secours, pas la réponse.",
          "MODE JURY. Tu es membre d'un jury de soutenance d'ingénieur, poli mais exigeant. Mon projet : [résumé que je fournis]. Pose 5 questions, une à la fois : 1 facile, 2 techniques, 1 critique, 1 imprévue. Attends ma réponse. Si je bloque, propose une expression de secours et attends. N'invente aucun détail sur mon projet. À la fin : retour sur clarté, concision, calme, et 3 corrections maximum."),
     ]
-    cards = "".join(f'<div class="card"><h3>{a}</h3><p class="small">{esc(b)}</p><div class="claude" style="margin-top:1.5mm"><div class="hd">Prompt de base<span>à adapter</span></div><div class="body">{esc(c)}</div></div></div>' for a, b, c in modes)
+    cards = "".join(f'<div class="card"><h3>{a}</h3><p class="small">{esc(b)}</p><div class="claude" style="margin-top:3mm"><div class="hd">Prompt de base<span>à adapter</span></div><div class="body">{esc(c)}</div></div></div>' for a, b, c in modes)
     body = f"""
 <div class="kicker">Entraînement avec Claude</div>
 <h2 class="sec" style="margin-top:1mm">Un partenaire qui te fait parler — pas qui parle à ta place</h2>
@@ -682,7 +795,7 @@ def project_pages(book):
     ]
     first = True
     for title, fields in groups:
-        inner = "".join(f'<div class="fieldlbl">{a}</div><div class="fieldhelp">{b}</div>{lines(7.45 * k + 1)}' for a, b, k in fields)
+        inner = "".join(f'<div class="fieldlbl">{a}</div><div class="fieldhelp">{b}</div>{lines(8 * k + 2)}' for a, b, k in fields)
         body = f"""<div class="kicker">Mon projet de fin d'études</div><h2 class="sec" style="margin-top:1mm">{title}</h2>
 <p class="small muted">À remplir avec les informations réelles de ton projet, puis à mettre à jour. Les séances de février à avril s'appuient sur ces pages : rien n'est inventé à ta place.</p>{inner}"""
         book.add(body, TITLE, "Mon projet", "Fiche projet", anchor="projet" if first else None)
@@ -700,7 +813,7 @@ def initial_test(book):
     body = f"""
 <div class="kicker">Test initial · 16 novembre 2026</div>
 <h2 class="sec" style="margin-top:1mm">Mon point de départ</h2>
-<p class="small">Ce test n'est pas un examen : c'est une photographie. Enregistre chaque épreuve sur ton téléphone et garde les fichiers. Le 30 avril, tu les réécouteras.</p>
+<p class="small"><b>Le 16 novembre, fais ce test en premier (≈ 12 min), puis la séance du jour 001 en version courte (20 min).</b> Ce test n'est pas un examen : c'est une photographie. Enregistre chaque épreuve sur ton téléphone et garde les fichiers. Le 30 avril, tu les réécouteras.</p>
 <table class="t"><tr><th>Épreuve</th><th>Consigne</th><th>Durée</th><th>Durée réelle</th></tr>
 <tr><td>1 · Me présenter</td><td>Nom, études, ville, ce que j'aime dans l'informatique.</td><td>1 min</td><td></td></tr>
 <tr><td>2 · Raconter</td><td>Raconte ta journée d'hier, du matin au soir.</td><td>1 min</td><td></td></tr>
@@ -712,7 +825,7 @@ def initial_test(book):
 <div><div class="fieldlbl">Ce qui me bloque le plus quand je parle</div>{lines(30, "lines sm")}
 <div class="fieldlbl">Nombre de pauses longues (> 3 s) — épreuve 2</div><div class="field"></div>
 <div class="fieldlbl">Mon objectif personnel pour avril 2027</div>{lines(23, "lines sm")}</div></div>
-<div class="claude"><div class="hd">À copier dans Claude · Test initial<span>une question à la fois</span></div><div class="body">Tu es examinateur bienveillant de français oral. Je suis développeur en génie logiciel, niveau B1 environ. Pose-moi 3 questions surprises sur ma vie quotidienne, mes études et mon avenir professionnel, une seule à la fois, en attendant ma réponse. Ne m'aide pas pendant que je réponds. À la fin, décris mon niveau en 4 lignes (fluidité, construction des phrases, vocabulaire, clarté) et donne mes 3 erreurs les plus importantes, avec une correction naturelle et une explication simple. Ne juge pas ma prononciation si tu ne reçois que du texte.</div></div>
+<div class="claude"><div class="hd">Prompt pour Claude — test initial<span>copier tel quel</span></div><div class="body">Tu es examinateur bienveillant de français oral. Je suis développeur en génie logiciel, niveau B1 environ. Pose-moi 3 questions surprises sur ma vie quotidienne, mes études et mon avenir professionnel, une seule à la fois, en attendant ma réponse. Ne m'aide pas pendant que je réponds. À la fin, décris mon niveau en 4 lignes (fluidité, construction des phrases, vocabulaire, clarté) et donne mes 3 erreurs les plus importantes, avec une correction naturelle et une explication simple. Ne juge pas ma prononciation si tu ne reçois que du texte.</div></div>
 """
     book.add(body, f"{TITLE} · <b>Évaluation</b>", "Test initial", "Test initial", anchor="test0")
 
@@ -724,26 +837,31 @@ def grid_progress(book, sundays):
 <div class="kicker">Tableau de progression global</div>
 <h2 class="sec" style="margin-top:1mm">23 semaines, 8 critères</h2>
 <p class="small muted">Chaque dimanche, reporte ta note (1 à 5) pour chaque critère. Colorie la case : plus la note est haute, plus la couleur est foncée. En un regard, tu vois tes forces et tes priorités.</p>
-<table class="t" style="font-size:7.6pt"><tr><th>Semaine</th>{head}<th style="width:40mm">Remarque</th></tr>{rows}
+<table class="t grid" style="font-size:7.6pt"><tr><th>Semaine</th>{head}<th style="width:40mm">Remarque</th></tr>{rows}
 <tr><td><b>Final</b> 30/04</td>{''.join('<td></td>' for _ in CRITERIA)}<td></td></tr></table>
 """
     book.add(body, f"{TITLE} · <b>Suivi</b>", "Progression globale", "Progression globale", anchor="progress")
 
 
 def phase_page(book, p):
-    sk = "".join(f"<li>{esc(s)}</li>" for s in p["skills"])
+    sk = "".join(f"<li>{esc(x)}</li>" for x in p["skills"])
+    amp = 0.25 + 0.75 * p["n"] / 6
     body = f"""
-<div style="position:absolute;left:0;right:0;top:0;height:92mm;background:#1c2333"></div>
-<div style="position:absolute;left:17mm;right:17mm;top:20mm;color:#fff">
-<div style="font-size:8pt;letter-spacing:.3em;text-transform:uppercase;color:#f0a37f">Phase {p['n']} · {fdate(p['start'], False)} → {fdate(p['end'], False)}</div>
-<div style="font-family:Georgia,serif;font-size:34pt;line-height:1.1;margin-top:6mm">{esc(p['name'])}</div>
-<div style="font-family:Georgia,serif;font-size:12.5pt;color:#d7dbe4;margin-top:5mm;max-width:150mm">{esc(p['goal'])}</div></div>
-<div style="position:absolute;left:17mm;right:17mm;top:104mm">
+<div style="position:absolute;inset:0;background:var(--paper)"></div>
+<div style="position:absolute;left:30mm;top:0;bottom:0;border-left:1.2pt solid var(--margin)"></div>
+<div style="position:absolute;right:14mm;top:8mm;font-stretch:75%;font-weight:700;font-size:150pt;line-height:1;color:#F2D4CC">{p['n']:02d}</div>
+<div style="position:absolute;left:38mm;right:18mm;top:28mm">
+ <div class="kicker">Phase {p['n']} sur 6 · {fdate(p['start'], False)} → {fdate(p['end'], False)}</div>
+ <div style="font-family:var(--disp);font-size:36pt;line-height:1.05;margin-top:5mm;color:var(--ink);max-width:115mm">{esc(p['name'])}</div>
+ <div style="font-family:var(--serif);font-style:italic;font-size:12.5pt;line-height:1.5;color:var(--ink2);margin-top:5mm;max-width:130mm">{esc(p['goal'])}</div>
+</div>
+<div style="position:absolute;left:30mm;right:0;top:96mm">{wave(180, 22, amp, 170, "#D6402B", p['n'] * 0.9)}</div>
+<div style="position:absolute;left:38mm;right:18mm;top:121mm;font-size:7.4pt;letter-spacing:.08em;color:var(--ink2)">TA VOIX GRANDIT · phase {p['n']} / 6 · niveau visé <b style="color:var(--red)">{p['level']}</b> · échauffement : {p['warm']} de parole continue</div>
+<div style="position:absolute;left:38mm;right:18mm;top:133mm">
 <div class="grid2"><div class="card"><h3>Ce que je vais travailler</h3><ul class="clean">{sk}</ul></div>
-<div class="card"><h3>À la fin de cette phase, je suis capable de…</h3><p class="lead" style="font-size:10.5pt">{esc(p['final'])}</p>
-<p class="small muted">Niveau visé : <b>{p['level']}</b> · Échauffement : <b>{p['warm']}</b> de parole continue.</p></div></div>
-<div class="card"><h3>Mes intentions pour cette phase</h3>{lines(30, "lines sm")}</div>
-<div class="card"><h3>Ce que je veux pouvoir dire, à l'oral, à la fin de la phase</h3>{lines(45, "lines sm")}</div></div>
+<div class="card" style="border-top-color:var(--red)"><h3>À la fin de la phase, je sais…</h3><p class="lead" style="font-size:11pt">{esc(p['final'])}</p></div></div>
+<div class="card"><h3>Mes intentions pour cette phase</h3>{lines(32)}</div>
+<div class="card"><h3>Ce que je veux pouvoir dire à l'oral à la fin de la phase</h3>{lines(40)}</div></div>
 """
     book.add(body, bare=True, anchor=f"phase{p['n']}")
 
@@ -809,7 +927,10 @@ def final_sim(book):
 <tr><td>Questions du jury (faciles, techniques, critiques, imprévues)</td><td>15 min</td><td>☐</td></tr><tr><td>Réécoute et grille ci-dessous</td><td>20 min</td><td>☐</td></tr></table>
 <div class="grid2" style="margin-top:3mm"><div><table class="t"><tr><th>Grille du jury</th><th>Note</th><th>Commentaire</th></tr>{rows}</table></div>
 <div><div class="fieldlbl">Comparaison avec le test initial (16 novembre)</div>{lines(36, "lines sm")}
-<div class="fieldlbl">Mes 3 derniers ajustements avant le jour J</div>{lines(30, "lines sm")}</div></div>"""
+<div class="fieldlbl">Mes 3 derniers ajustements avant le jour J</div>{lines(30, "lines sm")}</div></div>
+<div class="fieldlbl" style="margin-top:4mm">Journal des questions du jury — et la qualité de ma réponse</div>
+<table class="corr"><tr><th style="width:44%">Question posée</th><th style="width:38%">Ce que j'ai répondu (idée clé)</th><th>Note /5</th></tr>
+{''.join('<tr><td style="height:9mm"></td><td></td><td></td></tr>' for _ in range(7))}</table>"""
     book.add(body, f"{TITLE} · <b>Évaluation</b>", "Simulation finale", "Simulation finale", anchor="final")
 
 
@@ -832,7 +953,11 @@ def toc_pages(book, all_entries):
     body = f"""<div class="kicker">Sommaire</div><h2 class="sec" style="margin-top:1mm">Sommaire</h2>
 <div class="grid2" style="grid-template-columns:1.35fr 1fr;gap:7mm"><table class="t">{rows}</table>
 <div><div class="fieldlbl" style="margin-top:0">Calendrier de progression</div>{cal}
-<p class="small muted" style="margin-top:2mm">Le calendrier détaillé des 166 séances, avec un lien vers chaque page, suit ce sommaire. Dans le PDF, clique sur une date pour y aller directement.</p></div></div>"""
+<p class="small muted" style="margin-top:2mm">Le calendrier détaillé des 166 séances, avec un lien vers chaque page, suit ce sommaire. Dans le PDF, clique sur une date pour y aller directement.</p></div></div>
+<div class="card" style="margin-top:5mm;border-color:var(--accent)"><h3>Mon engagement</h3>
+<p class="lead" style="font-size:10.5pt">Du 16 novembre 2026 au 30 avril 2027, je parle français chaque jour à voix haute — 60 minutes quand je peux, 20 minutes quand la journée est chargée, jamais zéro. Je m'enregistre, je corrige trois points au maximum, et je mesure mes progrès chaque dimanche.</p>
+<div class="grid3" style="margin-top:3mm"><div><div class="fieldlbl">Date de début</div><div class="field"></div></div>
+<div><div class="fieldlbl">Mon heure de séance</div><div class="field"></div></div><div><div class="fieldlbl">Signature</div><div class="field"></div></div></div></div>"""
     pages = [(body, "Sommaire")]
     months = [(2026, 11), (2026, 12), (2027, 1), (2027, 2), (2027, 3), (2027, 4)]
     for k in range(0, 6, 2):

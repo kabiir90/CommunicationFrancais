@@ -1,0 +1,7 @@
+{
+  "name": "carnet-de-voix",
+  "private": true,
+  "description": "Génère la version Word du carnet (python export_docx_model.py puis node build_docx.js)",
+  "scripts": { "docx": "python export_docx_model.py && node build_docx.js" },
+  "dependencies": { "docx": "9.5.1", "jszip": "3.10.1" }
+}
