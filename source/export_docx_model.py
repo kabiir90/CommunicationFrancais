@@ -474,12 +474,12 @@ def day_page(day, idx, all_days, num, week_no):
         who, txt = who.strip(), txt.strip()
         name = (day["a"] if who == "A" else day["b"]).split(",")[0].split("(")[0].strip()
         if txt.startswith("?"):
-            rows.append([cell([R(name.upper(), f="sans", s=7.5, b=True, c=RED)], align="right"),
+            rows.append([cell([R(name.upper(), f="sans", s=7.5, b=True, c=RED)], ),
                          cell(paras=[[R("✎ À TOI, SANS MODÈLE · ", f="sans", s=7.5, b=True, c=RED)] + rich(txt[1:].strip(), i=True, c=RED, s=10), [R(" ")]], under=RED)])
         else:
-            rows.append([cell([R(name.upper(), f="sans", s=7.5, b=True, c=INK if who == "B" else INK2)], align="right"),
+            rows.append([cell([R(name.upper(), f="sans", s=7.5, b=True, c=INK if who == "B" else INK2)], ),
                          cell([R("— ", c="8D93AB")] + rich(txt, f="serif", s=10))])
-    table([2000, 7700], rows, border="none")
+    table([1900, 7800], rows, border="none")
     para([R("≈ AUTRES FAÇONS DE DIRE LA MÊME CHOSE", c=RED, f="sans", s=7.5, b=True)], before=120, after=40, rule=True)
     for v in day["var"]:
         para([R("≈  ", c=RED, b=True)] + alt(v, f="serif", s=9.5), after=20)

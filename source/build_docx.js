@@ -110,7 +110,7 @@ function pushPara(opt) {
   out.push(new Paragraph(opt));
 }
 function para(rs, o = {}) {
-  const opt = { children: runs(rs), spacing: { before: o.before ?? 0, after: o.after ?? 80, line: 276 } };
+  const opt = { children: runs(rs), alignment: AlignmentType.LEFT, spacing: { before: o.before ?? 0, after: o.after ?? 80, line: 276 } };
   // gros caractères : interligne minimal fixe, sinon certains lecteurs superposent les lignes
   const maxPt = Math.max(0, ...rs.map((r) => r.s || 9.5));
   if (maxPt >= 20) opt.spacing = { ...opt.spacing, line: Math.round(maxPt * 20 * 1.12), lineRule: D.LineRuleType.AT_LEAST };
@@ -264,7 +264,7 @@ const doc = new Document({
     },
     headers: {
       first: new Header({ children: [new Paragraph({ children: [] })] }),
-      default: new Header({ children: [new Paragraph({ alignment: AlignmentType.RIGHT,
+      default: new Header({ children: [new Paragraph({ alignment: AlignmentType.LEFT,
         children: [run({ t: "Parler, expliquer, convaincre · carnet de voix", f: "sans", s: 7.5, c: FAINT, sp: 20 })] })] }),
     },
     footers: {
@@ -276,7 +276,7 @@ const doc = new Document({
   }],
 });
 
-const dest = path.join(HERE, "..", "Programme-Francais-Oral-Soutenance-2026-2027.docx");
+const dest = process.env.DOCX_OUT || path.join(HERE, "..", "Programme-Francais-Oral-Soutenance-2026-2027.docx");
 // On retire les entrées « dossier » du ZIP : certains services cloud refusent sinon d'ouvrir le fichier.
 const JSZip = require("jszip");
 Packer.toBuffer(doc)
@@ -286,7 +286,43 @@ Packer.toBuffer(doc)
     const clean = new JSZip();
     for (const name of Object.keys(zip.files)) {
       const f = zip.files[name];
-      if (!f.dir) clean.file(name, await f.async("nodebuffer"), { createFolders: false });
+      if (f.dir) continue;
+      let data = await f.async("nodebuffer");
+      if (name === "word/styles.xml") {
+        // Langue française + écriture de gauche à droite imposées : sinon un Word réglé en arabe
+        // applique son défaut (droite → gauche, aligné à droite).
+        let x = data.toString("utf8");
+        x = x.replace("</w:rPr></w:rPrDefault>", '<w:lang w:val="fr-FR" w:eastAsia="fr-FR" w:bidi="ar-MA"/></w:rPr></w:rPrDefault>');
+        x = x.replace("<w:pPrDefault/>", '<w:pPrDefault><w:pPr><w:bidi w:val="0"/><w:jc w:val="left"/></w:pPr></w:pPrDefault>');
+        data = Buffer.from(x, "utf8");
+      }
+      if (name === "word/document.xml") {
+        // Chaque paragraphe (y compris dans les tableaux) reçoit explicitement
+        // « gauche → droite » + « aligné à gauche » s'il n'a pas d'alignement propre.
+        let x = data.toString("utf8");
+        const AFTER_BIDI = ["adjustRightInd", "snapToGrid", "spacing", "ind", "contextualSpacing", "mirrorIndents", "suppressOverlap", "jc", "textDirection", "textAlignment", "textboxTightWrap", "outlineLvl", "divId", "cnfStyle", "rPr", "sectPr", "pPrChange"];
+        const AFTER_JC = AFTER_BIDI.slice(AFTER_BIDI.indexOf("jc") + 1);
+        const insertBefore = (inner, tag, list) => {
+          let pos = inner.length;
+          for (const t of list) { const i = inner.search(new RegExp("<w:" + t + "[ />]")); if (i >= 0 && i < pos) pos = i; }
+          return inner.slice(0, pos) + tag + inner.slice(pos);
+        };
+        const fix = (inner) => {
+          if (!/<w:bidi[ />]/.test(inner)) inner = insertBefore(inner, '<w:bidi w:val="0"/>', AFTER_BIDI);
+          if (!/<w:jc[ />]/.test(inner)) inner = insertBefore(inner, '<w:jc w:val="left"/>', AFTER_JC);
+          return inner;
+        };
+        x = x.replace(/<w:p>(?!<w:pPr)/g, "<w:p><w:pPr></w:pPr>");
+        x = x.replace(/<w:pPr\/>/g, "<w:pPr></w:pPr>");
+        x = x.replace(/<w:pPr>([\s\S]*?)<\/w:pPr>/g, (m, inner) => "<w:pPr>" + fix(inner) + "</w:pPr>");
+        data = Buffer.from(x, "utf8");
+      }
+      if (name === "word/settings.xml") {
+        let x = data.toString("utf8");
+        if (!x.includes("w:themeFontLang")) x = x.replace("</w:settings>", '<w:themeFontLang w:val="fr-FR" w:bidi="ar-MA"/></w:settings>');
+        data = Buffer.from(x, "utf8");
+      }
+      clean.file(name, data, { createFolders: false });
     }
     return clean.generateAsync({ type: "nodebuffer", compression: "DEFLATE" });
   })

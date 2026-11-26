@@ -169,7 +169,7 @@ ol.qs li:before{content:"Q" counter(q);position:absolute;left:0;font-weight:700;
 .dlg .ctx{font-family:var(--serif);font-style:italic;font-size:9pt;color:var(--ink2);margin-bottom:1.6mm}
 .dlg .ctx b{font-style:normal;font-family:var(--sans);font-size:7pt;letter-spacing:.14em;text-transform:uppercase;color:var(--red);margin-right:1.6mm}
 .ln{display:grid;grid-template-columns:22mm 1fr;gap:2.6mm;padding:.8mm 0;font-family:var(--serif);font-size:9.7pt;line-height:1.38}
-.ln .who{font-family:var(--sans);font-size:7pt;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);text-align:right;padding-top:.9mm}
+.ln .who{font-family:var(--sans);font-size:7pt;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);text-align:left;padding-top:.9mm}
 .ln .say:before{content:"— ";color:var(--faint)}
 .ln.b .who{color:var(--ink)}
 .ln.me .who{color:var(--red)}
